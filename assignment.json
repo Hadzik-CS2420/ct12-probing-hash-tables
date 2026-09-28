@@ -3,9 +3,16 @@
     "canvas_title": "👨‍💻 Code-Together 11: Probing Hash Tables",
     "points_possible": 30,
     "due_at": "",
-    "submission_types": ["online_url"],
+    "submission_types": [
+      "online_upload"
+    ],
     "github_classroom": true,
     "github_classroom_url": "",
-    "executable_name": "ct11-probing-hash-tables.exe"
+    "executable_name": "ct11-probing-hash-tables.exe",
+    "allowed_extensions": [
+      "png",
+      "jpg",
+      "jpeg"
+    ]
   }
 }
