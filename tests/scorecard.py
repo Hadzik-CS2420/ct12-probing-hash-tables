@@ -27,7 +27,7 @@ import tempfile
 sys.stdout.reconfigure(encoding="utf-8")
 
 WIDTH = 72
-TASK = "ct11-probing-hash-tables"
+TASK = "ct12-probing-hash-tables"
 
 # ---------------------------------------------------------------------------
 # Section table -- the single source of truth for how CT 12 is scored here.
@@ -112,7 +112,7 @@ def run_suite():
             sys.exit("The build failed, so there is nothing to score yet. "
                      "Fix the compile errors and run this again.")
 
-    out = os.path.join(tempfile.gettempdir(), "ct11-probing-hash-tables_results.json")
+    out = os.path.join(tempfile.gettempdir(), "ct12-probing-hash-tables_results.json")
     # A non-zero exit just means tests failed, which is expected while you are
     # still working -- so the return code is deliberately ignored here.
     subprocess.run([exe, "--gtest_output=json:" + out],

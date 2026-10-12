@@ -1,5 +1,5 @@
 {
-  "name": "CS 2420 · ct11-probing-hash-tables",
+  "name": "CS 2420 · ct12-probing-hash-tables",
   "image": "mcr.microsoft.com/devcontainers/cpp:1-ubuntu-24.04",
   "containerEnv": {
     "CC": "gcc-13",
