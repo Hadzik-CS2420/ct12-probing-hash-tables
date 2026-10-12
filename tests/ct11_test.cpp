@@ -133,6 +133,7 @@ TEST(ProbingSearch, ReturnsNullForMissing) {
     ProbingHashTable table;
     table.insert("Alice", 95);
 
+    EXPECT_NE(table.search("Alice"), nullptr) << "a key that was inserted must be found";
     EXPECT_EQ(table.search("Frank"), nullptr);
     EXPECT_EQ(table.search(""), nullptr);
 }
@@ -140,6 +141,11 @@ TEST(ProbingSearch, ReturnsNullForMissing) {
 TEST(ProbingSearch, EmptyTable) {
     ProbingHashTable table;
     EXPECT_EQ(table.search("Alice"), nullptr);
+
+    // Returning nullptr always would satisfy the line above, so the same
+    // table has to start finding the key once it is genuinely in there.
+    table.insert("Alice", 95);
+    EXPECT_NE(table.search("Alice"), nullptr);
 }
 
 TEST(ProbingSearch, FindsAfterCollision) {
@@ -210,6 +216,11 @@ TEST(ProbingRemove, ReturnsFalseForMissing) {
 TEST(ProbingRemove, RemoveFromEmptyTable) {
     ProbingHashTable table;
     EXPECT_FALSE(table.remove("Alice"));
+    EXPECT_EQ(table.size(), 0);
+
+    // A remove() that always returns false would pass on the lines above.
+    table.insert("Alice", 95);
+    EXPECT_TRUE(table.remove("Alice"));
     EXPECT_EQ(table.size(), 0);
 }
 

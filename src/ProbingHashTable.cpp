@@ -51,7 +51,7 @@ int ProbingHashTable::next_prime(int n) {
 //
 ProbingHashTable::ProbingHashTable(int capacity)
     : size_(0), capacity_(capacity) {
-    // TODO: Allocate the slot array on the heap
+    // TODO 1: Allocate the slot array on the heap
     //   - use new HashSlot[capacity_] to create a contiguous array
     //   - HashSlot's default constructor handles initialization (all EMPTY)
     //   - assign the result to table_
@@ -68,7 +68,7 @@ ProbingHashTable::ProbingHashTable(int capacity)
 //   - std::string members in each HashSlot are automatically destroyed
 //
 ProbingHashTable::~ProbingHashTable() {
-    // TODO: Free the slot array
+    // TODO 2: Free the slot array
     //   - use delete[] to free the contiguous block
 }
 
@@ -128,14 +128,14 @@ size_t ProbingHashTable::hash(const std::string& key) const {
 //   - OCCUPIED slot with a DIFFERENT key → keep probing: (index + 1) % capacity_
 //
 void ProbingHashTable::insert(const std::string& key, int value) {
-    // TODO: Resize BEFORE inserting if load factor would exceed threshold
+    // TODO 3: Resize BEFORE inserting if load factor would exceed threshold
     //   - check if (size_ + 1) / capacity_ > MAX_LOAD_FACTOR (cast to double!)
     //   - if so, call resize()
 
-    // TODO: Hash the key to get the starting index
-    // TODO: Declare int first_deleted = -1 to remember the first tombstone
+    // TODO 4: Hash the key to get the starting index
+    // TODO 5: Declare int first_deleted = -1 to remember the first tombstone
 
-    // TODO: Linear probe — loop until you find a place for the entry
+    // TODO 6: Linear probe — loop until you find a place for the entry
     //   - Case 1: EMPTY → key not in table
     //     if first_deleted != -1, use that index instead (reuse tombstone)
     //     set key, value, status = OCCUPIED, increment size_, return
@@ -165,9 +165,9 @@ void ProbingHashTable::insert(const std::string& key, int value) {
 //   - this is the fundamental reason tombstones exist
 //
 int* ProbingHashTable::search(const std::string& key) const {
-    // TODO: Hash the key to get the starting index
+    // TODO 7: Hash the key to get the starting index
 
-    // TODO: Linear probe — loop until you find the key or confirm it's missing
+    // TODO 8: Linear probe — loop until you find the key or confirm it's missing
     //   - EMPTY → return nullptr (key not in table — stop here)
     //   - OCCUPIED + matching key → return &table_[index].value (found!)
     //   - OCCUPIED (different key) or DELETED → advance: (index + 1) % capacity_
@@ -195,9 +195,9 @@ int* ProbingHashTable::search(const std::string& key) const {
 //     but to clean up tombstones and shorten probe sequences
 //
 bool ProbingHashTable::remove(const std::string& key) {
-    // TODO: Hash the key to get the starting index
+    // TODO 9: Hash the key to get the starting index
 
-    // TODO: Linear probe — loop until you find the key or confirm it's missing
+    // TODO 10: Linear probe — loop until you find the key or confirm it's missing
     //   - EMPTY → return false (key not in table)
     //   - OCCUPIED + matching key → set status to DELETED (tombstone!),
     //     decrement size_, return true
@@ -236,19 +236,19 @@ double ProbingHashTable::load_factor() const {
 //   - after resize, probe sequences are shorter (lower load factor, no tombstones)
 //
 void ProbingHashTable::resize() {
-    // TODO: Step 1 — save old array
+    // TODO 11: Step 1 — save old array
     //   - save capacity_ and table_ before overwriting them
 
-    // TODO: Step 2 — allocate new array
+    // TODO 12: Step 2 — allocate new array
     //   - new capacity = next_prime(old_capacity * 2)
     //   - allocate new HashSlot[capacity_]
     //   - reset size_ = 0 (insert() will re-increment)
 
-    // TODO: Step 3 — rehash only OCCUPIED entries from old array
+    // TODO 13: Step 3 — rehash only OCCUPIED entries from old array
     //   - loop through old array: if status == OCCUPIED, call insert(key, value)
     //   - DELETED and EMPTY slots are simply not copied — tombstones cleared!
 
-    // TODO: Step 4 — free old array with delete[]
+    // TODO 14: Step 4 — free old array with delete[]
 }
 
 // ---------------------------------------------------------------------------
@@ -262,7 +262,7 @@ void ProbingHashTable::resize() {
 //   - after resize, notice: no tombstones, and keys moved to new positions
 //
 void ProbingHashTable::print() const {
-    // TODO: Loop through every slot [0, capacity_) and print its contents
+    // TODO 15: Loop through every slot [0, capacity_) and print its contents
     //   - OCCUPIED: print "(key, value)"
     //   - DELETED:  print "[deleted]"
     //   - EMPTY:    print "[empty]"
