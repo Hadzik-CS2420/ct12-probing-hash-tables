@@ -1,6 +1,6 @@
 <!-- Canvas LMS HTML Fragment — hand-authored. Collapsible sections follow the
      CS 1400 code-together pattern: details/summary with the heading inside the
-     summary. Verified to survive Canvas's HTML sanitizer; keyboard-accessible
+     summary. Verified to survive Canvas's HTML sanitiser; keyboard-accessible
      natively, no JS or ARIA. Matches the structure of CT 07, CT 08 and CT 09.
      No SVG is embedded here on purpose — inline SVG trips Canvas's accessibility
      checker, and Weber's Canvas rejects SVG on course import. The diagrams are
@@ -81,7 +81,7 @@ cmake --build build</pre>
 <h4>The individual programs</h4>
 <p>Two executables come out of the build:</p>
 <pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">./build/ct12-probing-hash-tables   # the grade book demo
-./build/run_tests                 # the test suite</pre>
+./build/run_tests                  # the test suite</pre>
 <p>Run one section&#x2019;s tests at a time by filtering:</p>
 <pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">./build/run_tests --gtest_filter=HashFunction.*</pre>
 
@@ -164,6 +164,58 @@ return hash_value % capacity_;</pre>
 <p>Find the key the same way <code>search</code> does, then mark its slot <code>DELETED</code> and decrement <code>size_</code>. The slot keeps its contents; only the status changes.</p>
 <p>Marking it <code>EMPTY</code> instead would be the obvious move and it is exactly wrong. An <code>EMPTY</code> slot tells every future search &quot;stop, nothing is past here&quot; &mdash; so any key that originally probed <em>through</em> this slot becomes unreachable, even though it is still sitting in the array. The tombstone is what keeps the trail intact.</p>
 <p><strong>Checkpoint:</strong> the three <code>ProbingRemove</code> tests and <code>Tombstone.SearchProbesPastTombstone</code> pass &mdash; 9 points. That last one is the test that proves the trail survived.</p>
+</details>
+
+<details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
+<summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Watch It Run &mdash; the probe, one slot at a time</h3></summary>
+
+<div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #dff0d8; border: 1px solid #d6e9c6; color: #3c763d;">
+    <strong>Step it yourself.</strong> Your repository has <code>images/stepper.html</code>
+    &mdash; double-click it to open it in a browser and press <strong>Next</strong>. It walks
+    <code>insert</code>, <code>remove</code>, <code>search</code> and <code>resize</code> one
+    slot at a time, and every demo has a switch for doing it the wrong way so you can watch
+    the bug happen. Nothing to install, and it works offline.
+</div>
+<p>The sequence below is the one worth having in your head before you write
+<code>search</code>. It is the same run the stepper shows, printed out.</p>
+0 option combination(s), 0 frames drawn, 0 failure(s)
+<p>The table below is the one every demo starts from &mdash; Alice landed on her own hash, Diana probed one slot past her, Eve probed one past that, and Diana has since been removed:</p>
+<pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">  0  EMPTY
+  1  EMPTY
+  2  EMPTY
+  3  EMPTY
+  4  Alice = 95
+  5  DELETED  (Diana was here)
+  6  Eve = 88</pre>
+<p><strong>Correct — a tombstone means keep probing:</strong></p>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+    <thead>
+        <tr><th scope="col" style="border: 1px solid #c7cdd1; padding: 8px 12px; text-align: left; background-color: #f5f5f5;"><strong>Step</strong></th><th scope="col" style="border: 1px solid #c7cdd1; padding: 8px 12px; text-align: left; background-color: #f5f5f5;"><strong>Probe at</strong></th><th scope="col" style="border: 1px solid #c7cdd1; padding: 8px 12px; text-align: left; background-color: #f5f5f5;"><strong>What happens</strong></th></tr>
+    </thead>
+    <tbody>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">1</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>&mdash;</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Alice in 4, a tombstone in 5 where Diana was, Eve in 6. Looking for Eve.</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">2</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 5</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">hash("Eve") is 5.</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">3</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 5</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Slot 5 is a tombstone. Something used to be here, so the probe run continues through it &mdash; Eve may be further along.</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">4</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 6</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Probe moves to slot 6.</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">5</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 6</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Slot 6 holds Eve.</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">6</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 6</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Return the address of its value &mdash; 88.</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">7</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>&mdash;</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Eve was found two slots from where she hashes, across a tombstone. That is the whole reason DELETED exists.</td></tr>
+    </tbody>
+</table>
+<p><strong>The bug — treating DELETED like EMPTY:</strong></p>
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+    <thead>
+        <tr><th scope="col" style="border: 1px solid #c7cdd1; padding: 8px 12px; text-align: left; background-color: #f5f5f5;"><strong>Step</strong></th><th scope="col" style="border: 1px solid #c7cdd1; padding: 8px 12px; text-align: left; background-color: #f5f5f5;"><strong>Probe at</strong></th><th scope="col" style="border: 1px solid #c7cdd1; padding: 8px 12px; text-align: left; background-color: #f5f5f5;"><strong>What happens</strong></th></tr>
+    </thead>
+    <tbody>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">1</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>&mdash;</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Alice in 4, a tombstone in 5 where Diana was, Eve in 6. Looking for Eve.</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">2</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 5</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">hash("Eve") is 5.</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">3</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 5</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Slot 5 is DELETED &mdash; and this version treats that like EMPTY and gives up.</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">4</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>slot 5</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">Return nullptr. But look at the table: Eve is sitting right there in slot 6. The entry was never removed &mdash; the search just stopped one slot too early.</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">5</td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;"><code>&mdash;</code></td><td style="border: 1px solid #c7cdd1; padding: 8px 12px; vertical-align: top;">This is the bug that looks random. Only the keys that happen to probe past a removed slot disappear &mdash; everything else keeps working, so the table seems fine until it suddenly is not.</td></tr>
+    </tbody>
+</table>
+<p>Both runs read the identical table. The only difference is what happens at slot 5 &mdash; and that one decision is the difference between finding Eve and reporting her missing while she is sitting right there in the array.</p>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">

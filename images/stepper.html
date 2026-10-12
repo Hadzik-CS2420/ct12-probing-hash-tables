@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS 2420 &middot; Probing Stepper</title>
+<!--
+  Probing Stepper -- CT 12, Probing Hash Tables
+
+  Open this file in a browser. Double-click it, or right-click in VS Code ->
+  "Reveal in File Explorer" and double-click there. Nothing to install, no
+  internet needed, no extension: it is one self-contained file.
+
+  WHY NOT IN VS CODE: VS Code has no built-in HTML preview that runs
+  JavaScript. The markdown preview strips scripts and Simple Browser needs a
+  URL. Every student already has a browser.
+
+  WHY THIS CT GETS A STEPPER AND CT 11 DOES NOT: chaining is a shape, and the
+  still diagrams show a shape perfectly well. Probing is a SEQUENCE. A
+  tombstone only makes sense once you have watched an earlier remove() put it
+  there and a later search() walk over it. Every hard bug in this file --
+  search stopping at DELETED, insert claiming the first tombstone too early --
+  is an ordering bug across several operations, which is exactly what a still
+  cannot hold.
+
+  Frames are not written out by hand. A tiny model of the table (seven slots,
+  each EMPTY / OCCUPIED / DELETED) is mutated step by step, and each frame is
+  a snapshot of it -- so the picture is whatever the code would actually do,
+  and cannot drift from it. hash() here is the same multiply-and-add the
+  assignment ships, so the slot numbers on screen are the real ones:
+  Alice and Diana both hash to 4, which is what makes the cluster.
+
+  Everything is deliberately plain: no libraries, no build step, no fetch().
+  It has to work from a file:// URL on a Chromebook.
+-->
+<style>
+  :root {
+    --ink: #1a1a2e; --muted: #555; --line: #cbd5e1; --panel: #f8fafc;
+    --blue: #2573a7; --green: #1c7e45; --red: #c0392b; --orange: #a95c19;
+    --purple: #8e44ad; --teal: #00695c;
+    --zoom: 2.2;
+  }
+  html { font-size: calc(16px * var(--zoom)); }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif; color: var(--ink);
+    background: #fff; margin: 0; padding: 0 1rem 4rem; line-height: 1.5;
+  }
+  .wrap { max-width: min(1700px, 97vw); margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg,#00695c 0%,#00796b 100%);
+    color: #fff; border-radius: 12px; padding: 1.5rem 2rem; margin: 1.5rem 0;
+  }
+  header h1 { margin: 0; font-size: 1.5rem; }
+  header p { margin: .5rem 0 0; font-size: .95rem; }
+  .sizebar { margin-top: .9rem; font-size: .8rem; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+  .sizebar button {
+    font: inherit; padding: .2rem .6rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid rgba(255,255,255,.55); background: rgba(255,255,255,.14); color: #fff;
+  }
+  .sizebar .val { opacity: .85; }
+  nav { margin-bottom: 1.5rem; font-size: .9rem; }
+  nav a {
+    display: inline-block; margin: 0 .5rem .4rem 0; padding: .3rem .7rem;
+    background: #e0f2f1; color: #00695c; border-radius: 999px;
+    text-decoration: none; border: 1px solid #b2dfdb;
+  }
+  nav a:hover { background: #b2dfdb; }
+  section {
+    border: 1px solid var(--line); border-radius: 12px; padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem; outline: none;
+  }
+  section:focus-visible { box-shadow: 0 0 0 3px #80cbc4; }
+  section h2 { margin: 0 0 .3rem; font-size: 1.2rem; }
+  .sub { margin: 0 0 1rem; color: var(--muted); font-size: .9rem; }
+  .cols { display: flex; gap: 1.25rem; flex-wrap: wrap; align-items: flex-start; }
+  .col { flex: 1; min-width: 320px; }
+  pre.code {
+    background: #1e1e2e; color: #cdd6f4; border-radius: 8px; padding: .9rem 1rem;
+    overflow-x: auto; font-family: Consolas,'Courier New',monospace;
+    font-size: .8rem; line-height: 1.65; margin: 0; white-space: pre;
+  }
+  .ln { display: block; padding: 0 .35rem; border-radius: 4px; }
+  .ln.on { background: #45475a; box-shadow: inset 3px 0 0 #f9e2af; }
+  .kw { color: #cba6f7; } .ty { color: #89dceb; } .fn { color: #89b4fa; }
+  .st { color: #a6e3a1; } .cm { color: #9399b2; font-style: italic; } .nu { color: #fab387; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: .75rem .9rem; margin-bottom: .75rem;
+  }
+  .panel h3 { margin: 0 0 .5rem; font-size: .8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  table.slots { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  table.slots th, table.slots td { border: 1px solid var(--line); padding: .3rem .5rem; text-align: left; }
+  table.slots th { background: #eef2f6; font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+  table.slots td.idx { font-family: Consolas,monospace; color: var(--muted); width: 3.2rem; }
+  tr.empty td { color: #9aa3ad; }
+  tr.occupied td { background: #f2fbf4; }
+  tr.deleted td { background: #fdeeea; color: var(--red); }
+  tr.at td { box-shadow: inset 0 0 0 2px var(--orange); font-weight: 700; }
+  tr.start td.idx::after { content: " \2190 start"; color: var(--blue); font-weight: 700; font-size: .72rem; }
+  tr.fd td.idx::after { content: " \2190 first_deleted"; color: var(--purple); font-weight: 700; font-size: .72rem; }
+  .vars { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .var {
+    background: #fff; border: 1px solid var(--line); border-radius: 999px;
+    padding: .2rem .7rem; font-family: Consolas,monospace; font-size: .78rem;
+  }
+  .var.changed { border-color: var(--orange); background: #fff3e0; }
+  .var b { color: var(--blue); font-weight: 600; }
+  .out { margin: 0; font-family: Consolas,monospace; font-size: .82rem; min-height: 1.3em; }
+  .note {
+    margin: 1rem 0 .75rem; padding: .7rem .9rem; border-left: 4px solid var(--teal);
+    background: #e0f2f1; border-radius: 6px; font-size: .86rem; min-height: 1.3em;
+  }
+  .note.bad { border-left-color: var(--red); background: #fdeeea; }
+  .note.good { border-left-color: var(--green); background: #f2fbf4; }
+  .controls { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  .controls button {
+    font: inherit; font-size: .85rem; padding: .35rem 1rem; border-radius: 6px;
+    border: 1px solid var(--teal); background: var(--teal); color: #fff; cursor: pointer;
+  }
+  .controls button.ghost { background: #fff; color: var(--teal); }
+  .controls button:disabled { opacity: .4; cursor: default; }
+  .count { font-size: .8rem; color: var(--muted); }
+  .opt { font-size: .85rem; color: var(--ink); }
+  .opt select { font: inherit; font-size: .85rem; padding: .2rem .4rem; }
+  footer { color: var(--muted); font-size: .8rem; margin-top: 2rem; }
+  @media (max-width: 900px) { :root { --zoom: 1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Probing Stepper</h1>
+  <p>CS 2420 &middot; Module 5 &middot; Code-Together 12 &middot; press <b>Next</b> (or the &rarr; key)
+     and watch the probe walk the array.</p>
+  <div class="sizebar" id="sizebar">
+    <span>Text size</span>
+    <button data-zoom="out" title="Smaller">A&minus;</button>
+    <button data-zoom="in" title="Bigger">A+</button>
+    <button data-zoom="projector">Projector</button>
+    <button data-zoom="reset">Reset</button>
+    <span class="val" id="zoomval"></span>
+  </div>
+</header>
+
+<nav>
+  <a href="#d1">1. insert &mdash; building a cluster</a>
+  <a href="#d2">2. remove &mdash; leaving a tombstone</a>
+  <a href="#d3">3. search &mdash; why DELETED is not EMPTY</a>
+  <a href="#d4">4. insert &mdash; the tombstone trap</a>
+  <a href="#d5">5. resize &mdash; tombstones swept away</a>
+</nav>
+
+<section id="d1">
+  <h2>1. <code>insert</code> &mdash; building a cluster</h2>
+  <p class="sub">Seven slots, and the hash is the same multiply-and-add from CT 11. Alice and Diana
+     both land on <b>4</b>, so the second one has to walk. Watch the cluster form &mdash; this is the
+     table every later demo starts from.</p>
+  <div class="controls" style="margin: 0 0 .9rem;">
+    <label class="opt">Insert
+      <select data-opt="key">
+        <option value="all">Alice, then Diana, then Eve</option>
+        <option value="Alice">Alice only &mdash; lands on an empty slot</option>
+        <option value="Diana">Diana into a table holding Alice &mdash; one probe</option>
+        <option value="Eve">Eve into a table holding Alice and Diana &mdash; two probes</option>
+      </select>
+    </label>
+  </div>
+  <div class="cols">
+    <div class="col"><pre class="code" data-code></pre></div>
+    <div class="col">
+      <div class="panel"><h3>The table</h3><div data-slots></div></div>
+      <div class="panel"><h3>Variables</h3><div class="vars" data-vars></div></div>
+    </div>
+  </div>
+  <p class="note" data-note></p>
+  <div class="controls" data-controls></div>
+</section>
+
+<section id="d2">
+  <h2>2. <code>remove</code> &mdash; leaving a tombstone</h2>
+  <p class="sub">Removing Diana out of the middle of that cluster. The slot does not go back to
+     <code>EMPTY</code> &mdash; it becomes <code>DELETED</code>, and the key and value are left sitting
+     there. The next demo is why.</p>
+  <div class="controls" style="margin: 0 0 .9rem;">
+    <label class="opt">Mark the slot
+      <select data-opt="mode">
+        <option value="tombstone">DELETED &mdash; the correct way</option>
+        <option value="empty">EMPTY &mdash; the tempting way</option>
+      </select>
+    </label>
+  </div>
+  <div class="cols">
+    <div class="col"><pre class="code" data-code></pre></div>
+    <div class="col">
+      <div class="panel"><h3>The table</h3><div data-slots></div></div>
+      <div class="panel"><h3>Variables</h3><div class="vars" data-vars></div></div>
+      <div class="panel"><h3>Returns</h3><p class="out" data-out></p></div>
+    </div>
+  </div>
+  <p class="note" data-note></p>
+  <div class="controls" data-controls></div>
+</section>
+
+<section id="d3">
+  <h2>3. <code>search</code> &mdash; why <code>DELETED</code> is not <code>EMPTY</code></h2>
+  <p class="sub">Eve hashes to 5, but she is sitting in 6 because slot 5 was taken when she arrived.
+     Diana has since been removed, so slot 5 is now a tombstone. What the search does at that slot
+     decides whether Eve is ever found again.</p>
+  <div class="controls" style="margin: 0 0 .9rem;">
+    <label class="opt">At a <code>DELETED</code> slot
+      <select data-opt="onDeleted">
+        <option value="probe">keep probing &mdash; correct</option>
+        <option value="stop">stop and return nullptr &mdash; the bug</option>
+      </select>
+    </label>
+    <label class="opt">Look for
+      <select data-opt="target">
+        <option value="Eve">Eve &mdash; past the tombstone</option>
+        <option value="Alice">Alice &mdash; found before it</option>
+        <option value="Frank">Frank &mdash; genuinely not there</option>
+      </select>
+    </label>
+  </div>
+  <div class="cols">
+    <div class="col"><pre class="code" data-code></pre></div>
+    <div class="col">
+      <div class="panel"><h3>The table</h3><div data-slots></div></div>
+      <div class="panel"><h3>Variables</h3><div class="vars" data-vars></div></div>
+      <div class="panel"><h3>Returns</h3><p class="out" data-out></p></div>
+    </div>
+  </div>
+  <p class="note" data-note></p>
+  <div class="controls" data-controls></div>
+</section>
+
+<section id="d4">
+  <h2>4. <code>insert</code> &mdash; the tombstone trap</h2>
+  <p class="sub">Re-inserting Eve, whose slot 5 is now a tombstone and who is actually living in slot 6.
+     Dropping her into the first tombstone the moment you see it is the single most common bug in this
+     file, and it does not look like a bug &mdash; it looks like a table with two Eves.</p>
+  <div class="controls" style="margin: 0 0 .9rem;">
+    <label class="opt">On the first tombstone
+      <select data-opt="mode">
+        <option value="remember">remember it and keep probing &mdash; correct</option>
+        <option value="claim">write here immediately &mdash; the bug</option>
+      </select>
+    </label>
+  </div>
+  <div class="cols">
+    <div class="col"><pre class="code" data-code></pre></div>
+    <div class="col">
+      <div class="panel"><h3>The table</h3><div data-slots></div></div>
+      <div class="panel"><h3>Variables</h3><div class="vars" data-vars></div></div>
+    </div>
+  </div>
+  <p class="note" data-note></p>
+  <div class="controls" data-controls></div>
+</section>
+
+<section id="d5">
+  <h2>5. <code>resize</code> &mdash; tombstones swept away</h2>
+  <p class="sub">Growing from 7 slots to 17. Only <code>OCCUPIED</code> entries are re-inserted, so the
+     tombstone is never carried across &mdash; a resize is the only thing that cleans them up. Every key
+     gets a new index, because the index came from <code>% capacity_</code>.</p>
+  <div class="cols">
+    <div class="col"><pre class="code" data-code></pre></div>
+    <div class="col">
+      <div class="panel"><h3>The table</h3><div data-slots></div></div>
+      <div class="panel"><h3>Variables</h3><div class="vars" data-vars></div></div>
+    </div>
+  </div>
+  <p class="note" data-note></p>
+  <div class="controls" data-controls></div>
+</section>
+
+<footer>
+  One self-contained file &mdash; no libraries, no build step, no network. The slot numbers are
+  computed with the same <code>hash()</code> the assignment ships, so they are the real ones.
+</footer>
+
+</div>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * Text size -- the only reason this exists is projecting in class.
+ * ------------------------------------------------------------------ */
+(function () {
+  var bar = document.getElementById("sizebar"), val = document.getElementById("zoomval");
+  function current() {
+    return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--zoom")) || 1;
+  }
+  function set(z) {
+    z = Math.max(0.6, Math.min(4, z));
+    document.documentElement.style.setProperty("--zoom", z);
+    if (val) { val.textContent = Math.round(z * 100) + "%"; }
+  }
+  bar.addEventListener("click", function (e) {
+    var a = e.target.getAttribute("data-zoom");
+    if (!a) { return; }
+    if (a === "in")  { set(current() + 0.2); }
+    if (a === "out") { set(current() - 0.2); }
+    if (a === "projector") { set(2.2); }
+    if (a === "reset")     { set(1); }
+  });
+  set(current());
+}());
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ------------------------------------------------------------------ *
+ * The model -- seven slots, each EMPTY / OCCUPIED / DELETED.
+ * hash() is the assignment's own multiply-and-add, so the indices on
+ * screen are the ones the student's own table will produce.
+ * ------------------------------------------------------------------ */
+var EMPTY = "EMPTY", OCCUPIED = "OCCUPIED", DELETED = "DELETED";
+
+function hash(key, cap) {
+  var h = 0;
+  for (var i = 0; i < key.length; i++) {
+    h = (h * 31 + key.charCodeAt(i)) % cap;   // % each step: same answer, no overflow
+  }
+  return h;
+}
+
+function makeTable(cap) {
+  var slots = [];
+  for (var i = 0; i < cap; i++) { slots.push({ key: "", value: 0, status: EMPTY }); }
+  return { slots: slots, cap: cap, size: 0, at: null, start: null, fd: null };
+}
+
+function clone(T) { return JSON.parse(JSON.stringify(T)); }
+
+/* Plain insert used only to build the starting table for later demos --
+   it records nothing. */
+function quietInsert(T, key, value) {
+  var i = hash(key, T.cap);
+  for (var n = 0; n < T.cap; n++) {
+    var s = T.slots[i];
+    if (s.status === OCCUPIED && s.key === key) { s.value = value; return; }
+    if (s.status !== OCCUPIED) {
+      s.key = key; s.value = value; s.status = OCCUPIED; T.size++; return;
+    }
+    i = (i + 1) % T.cap;
+  }
+}
+
+function clusterTable() {
+  var T = makeTable(7);
+  quietInsert(T, "Alice", 95);
+  quietInsert(T, "Diana", 78);
+  quietInsert(T, "Eve", 88);
+  return T;
+}
+
+function withTombstone() {
+  var T = clusterTable();
+  var i = hash("Diana", T.cap);
+  for (var n = 0; n < T.cap; n++) {
+    if (T.slots[i].status === OCCUPIED && T.slots[i].key === "Diana") {
+      T.slots[i].status = DELETED; T.size--; break;
+    }
+    i = (i + 1) % T.cap;
+  }
+  return T;
+}
+
+function Recorder(code) {
+  var frames = [], last = {};
+  return {
+    frames: frames,
+    push: function (line, T, note, out, tone) {
+      var vars = [];
+      if (T.start !== null) { vars.push({ name: "start", value: String(T.start) }); }
+      if (T.at !== null)    { vars.push({ name: "index", value: String(T.at) }); }
+      if (T.fd !== undefined && T.fd !== null) {
+        vars.push({ name: "first_deleted", value: String(T.fd) });
+      }
+      vars.push({ name: "size_", value: String(T.size) });
+      vars.push({ name: "capacity_", value: String(T.cap) });
+      vars.forEach(function (v) {
+        v.changed = last[v.name] !== undefined && last[v.name] !== v.value;
+        last[v.name] = v.value;
+      });
+      frames.push({ code: code, line: line, table: clone(T), vars: vars,
+                    note: note, out: out, tone: tone });
+    }
+  };
+}
+
+function slotsHtml(T) {
+  var rows = T.slots.map(function (s, i) {
+    var cls = s.status === OCCUPIED ? "occupied" : (s.status === DELETED ? "deleted" : "empty");
+    if (i === T.at)    { cls += " at"; }
+    if (i === T.start) { cls += " start"; }
+    if (T.fd !== undefined && T.fd !== null && i === T.fd) { cls += " fd"; }
+    var shown = (s.status === EMPTY) ? "&mdash;" : esc(s.key);
+    var val   = (s.status === EMPTY) ? "&mdash;" : String(s.value);
+    var stat  = s.status === DELETED ? "DELETED" : s.status;
+    return '<tr class="' + cls + '"><td class="idx">' + i + "</td><td>" + stat +
+           "</td><td>" + shown + "</td><td>" + val + "</td></tr>";
+  }).join("");
+  return '<table class="slots"><thead><tr><th>#</th><th>Status</th><th>Key</th>' +
+         "<th>Value</th></tr></thead><tbody>" + rows + "</tbody></table>";
+}
+
+function Stepper(section, build) {
+  var i = 0, frames = [], timer = null;
+  var codeEl  = section.querySelector("[data-code]");
+  var varsEl  = section.querySelector("[data-vars]");
+  var outEl   = section.querySelector("[data-out]");
+  var slotsEl = section.querySelector("[data-slots]");
+  var noteEl  = section.querySelector("[data-note]");
+  var bar     = section.querySelector("[data-controls]");
+
+  bar.innerHTML =
+    '<button class="ghost" data-act="prev">&larr; Prev</button>' +
+    '<button data-act="next">Next &rarr;</button>' +
+    '<button class="ghost" data-act="play">Play</button>' +
+    '<button class="ghost" data-act="reset">Reset</button>' +
+    '<span class="count" data-count></span>';
+  var countEl = bar.querySelector("[data-count]");
+  var playBtn = bar.querySelector('[data-act="play"]');
+
+  function draw() {
+    var f = frames[i] || {};
+    codeEl.innerHTML = (f.code || []).map(function (line, n) {
+      // A blank spacer line must still occupy a row -- an empty span collapses
+      // to zero height and the grouping the code was written with disappears.
+      return '<span class="ln' + (n === f.line ? " on" : "") + '">' +
+             (line === "" ? "&nbsp;" : line) + "</span>";
+    }).join("");
+    varsEl.innerHTML = (f.vars || []).map(function (v) {
+      return '<span class="var' + (v.changed ? " changed" : "") + '"><b>' +
+             esc(v.name) + "</b> = " + esc(v.value) + "</span>";
+    }).join("");
+    // Every panel below is optional -- a section that does not declare one
+    // must not take the whole demo down with it.
+    if (slotsEl) { slotsEl.innerHTML = f.table ? slotsHtml(f.table) : ""; }
+    if (outEl)   { outEl.textContent = f.out ? f.out : " "; }
+    if (noteEl)  {
+      noteEl.innerHTML = f.note || "&nbsp;";
+      noteEl.className = "note" + (f.tone ? " " + f.tone : "");
+    }
+    countEl.textContent = "step " + (i + 1) + " of " + frames.length;
+    bar.querySelector('[data-act="prev"]').disabled = (i === 0);
+    bar.querySelector('[data-act="next"]').disabled = (i === frames.length - 1);
+  }
+
+  function go(n) {
+    i = Math.max(0, Math.min(frames.length - 1, n));
+    draw();
+    if (timer && i === frames.length - 1) { stop(); }
+  }
+  function stop() { clearInterval(timer); timer = null; playBtn.textContent = "Play"; }
+  function play() {
+    if (timer) { stop(); return; }
+    if (i === frames.length - 1) { i = 0; }
+    playBtn.textContent = "Pause";
+    timer = setInterval(function () { go(i + 1); }, 1100);
+  }
+
+  bar.addEventListener("click", function (e) {
+    var act = e.target.getAttribute("data-act");
+    if (!act) { return; }
+    if (act === "next")  { stop(); go(i + 1); }
+    if (act === "prev")  { stop(); go(i - 1); }
+    if (act === "reset") { stop(); go(0); }
+    if (act === "play")  { play(); }
+  });
+
+  section.setAttribute("tabindex", "0");
+  section.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") { stop(); go(i + 1); e.preventDefault(); }
+    if (e.key === "ArrowLeft")  { stop(); go(i - 1); e.preventDefault(); }
+  });
+
+  section.querySelectorAll("[data-opt]").forEach(function (el) {
+    el.addEventListener("change", function () { stop(); rebuild(); });
+  });
+
+  function opts() {
+    var o = {};
+    section.querySelectorAll("[data-opt]").forEach(function (el) {
+      o[el.getAttribute("data-opt")] = (el.type === "checkbox") ? el.checked : el.value;
+    });
+    return o;
+  }
+  function rebuild() { frames = build(opts()); i = 0; draw(); }
+  rebuild();
+  section.stepper = { count: function () { return frames.length; }, go: go,
+                      frames: function () { return frames; } };
+}
+
+/* ------------------------------------------------------------------ *
+ * Demo 1 -- insert, building the cluster
+ * ------------------------------------------------------------------ */
+var INSERT_CODE = [
+  '<span class="kw">void</span> ProbingHashTable::<span class="fn">insert</span>(<span class="kw">const</span> string&amp; key, <span class="ty">int</span> value) {',
+  '    <span class="ty">size_t</span> index = <span class="fn">hash</span>(key);',
+  '    <span class="ty">int</span> first_deleted = <span class="nu">-1</span>;',
+  '',
+  '    <span class="kw">for</span> (<span class="ty">int</span> n = <span class="nu">0</span>; n &lt; capacity_; ++n) {',
+  '        <span class="kw">if</span> (slots_[index].status == OCCUPIED &amp;&amp;',
+  '            slots_[index].key == key) {',
+  '            slots_[index].value = value;      <span class="cm">// update</span>',
+  '            <span class="kw">return</span>;',
+  '        }',
+  '        <span class="kw">if</span> (slots_[index].status == DELETED &amp;&amp; first_deleted &lt; <span class="nu">0</span>)',
+  '            first_deleted = index;            <span class="cm">// remember, do not claim</span>',
+  '        <span class="kw">if</span> (slots_[index].status == EMPTY) <span class="kw">break</span>;',
+  '        index = (index + <span class="nu">1</span>) % capacity_;  <span class="cm">// probe forward</span>',
+  '    }',
+  '',
+  '    <span class="ty">size_t</span> put = (first_deleted &gt;= <span class="nu">0</span>) ? first_deleted : index;',
+  '    slots_[put] = { key, value, OCCUPIED };',
+  '    ++size_;',
+  '}'
+];
+
+function recordInsert(R, T, key, value, opts) {
+  opts = opts || {};
+  T.start = hash(key, T.cap);
+  T.at = T.start;
+  T.fd = -1;
+  R.push(1, T, 'hash("' + key + '") is <b>' + T.start + '</b> &mdash; that is only where the probe <i>starts</i>.');
+  R.push(2, T, "<code>first_deleted</code> starts at &minus;1: no tombstone seen yet.");
+
+  for (var n = 0; n < T.cap; n++) {
+    var s = T.slots[T.at];
+    if (s.status === OCCUPIED && s.key === key) {
+      R.push(5, T, "Slot " + T.at + " already holds <b>" + key + "</b>.");
+      s.value = value;
+      R.push(7, T, "Same key, so this is an <b>update</b>. The value is overwritten and "
+                 + "<code>size_</code> does not move.", null, "good");
+      R.push(8, T, "Done &mdash; one entry, one slot.", null, "good");
+      T.at = null; T.start = null; T.fd = null;
+      return;
+    }
+    if (s.status === DELETED && T.fd < 0) {
+      T.fd = T.at;
+      if (opts.claimTombstone) {
+        R.push(11, T, "Slot " + T.at + " is a tombstone &mdash; and this version writes into it "
+                    + "straight away, without finishing the probe.", null, "bad");
+        s.key = key; s.value = value; s.status = OCCUPIED; T.size++;
+        R.push(17, T, "<b>" + key + "</b> is now in slot " + T.at
+                    + ". Keep stepping &mdash; the damage shows up in the table above.", null, "bad");
+        T.at = null; T.start = null; T.fd = null;
+        return;
+      }
+      R.push(11, T, "Slot " + T.at + " is a tombstone. Remember the index, but <b>keep going</b> "
+                  + "&mdash; " + key + " may already be further along.");
+      continue_probe();
+      continue;
+    }
+    if (s.status === EMPTY) {
+      R.push(12, T, "Slot " + T.at + " is <code>EMPTY</code>. Nothing was ever placed here, so "
+                  + key + " cannot be anywhere past it &mdash; the probe stops.");
+      break;
+    }
+    R.push(5, T, "Slot " + T.at + " holds <b>" + s.key + "</b>, not " + key + ". Collision &mdash; step forward.");
+    continue_probe();
+  }
+
+  function continue_probe() {
+    T.at = (T.at + 1) % T.cap;
+    R.push(13, T, "Probe moves to slot " + T.at + ". The <code>% capacity_</code> is what wraps it "
+                + "round the end of the array.");
+  }
+
+  var put = (T.fd >= 0) ? T.fd : T.at;
+  if (T.fd >= 0) {
+    R.push(16, T, "A tombstone was seen at " + T.fd + " and the key was not found, so the entry goes "
+                + "<b>back</b> into slot " + T.fd + " &mdash; reusing the dead slot rather than growing the run.", null, "good");
+  } else {
+    R.push(16, T, "No tombstone was passed, so the entry goes into slot " + put + ".");
+  }
+  T.at = put;
+  T.slots[put] = { key: key, value: value, status: OCCUPIED };
+  T.size++;
+  R.push(17, T, "<b>" + key + "</b> = " + value + " is now in slot " + put + ".", null, "good");
+  R.push(18, T, "<code>size_</code> is " + T.size + ".");
+  T.at = null; T.start = null; T.fd = null;
+}
+
+Stepper(document.getElementById("d1"), function (o) {
+  var R = Recorder(INSERT_CODE), T, plan;
+  if (o.key === "all") {
+    T = makeTable(7); plan = [["Alice", 95], ["Diana", 78], ["Eve", 88]];
+  } else if (o.key === "Alice") {
+    T = makeTable(7); plan = [["Alice", 95]];
+  } else if (o.key === "Diana") {
+    T = makeTable(7); quietInsert(T, "Alice", 95); plan = [["Diana", 78]];
+  } else {
+    T = makeTable(7); quietInsert(T, "Alice", 95); quietInsert(T, "Diana", 78);
+    plan = [["Eve", 88]];
+  }
+  R.push(0, T, "Seven slots, all <code>EMPTY</code> to begin with.");
+  plan.forEach(function (p) { recordInsert(R, T, p[0], p[1]); });
+  R.push(19, T, "Alice is at 4, Diana at 5, Eve at 6 &mdash; one contiguous run. "
+              + "That run is <b>primary clustering</b>, and every demo below starts here.");
+  return R.frames;
+});
+
+/* ------------------------------------------------------------------ *
+ * Demo 2 -- remove, leaving a tombstone
+ * ------------------------------------------------------------------ */
+var REMOVE_CODE = [
+  '<span class="kw">bool</span> ProbingHashTable::<span class="fn">remove</span>(<span class="kw">const</span> string&amp; key) {',
+  '    <span class="ty">size_t</span> index = <span class="fn">hash</span>(key);',
+  '',
+  '    <span class="kw">for</span> (<span class="ty">int</span> n = <span class="nu">0</span>; n &lt; capacity_; ++n) {',
+  '        <span class="kw">if</span> (slots_[index].status == EMPTY) <span class="kw">return</span> <span class="kw">false</span>;',
+  '        <span class="kw">if</span> (slots_[index].status == OCCUPIED &amp;&amp;',
+  '            slots_[index].key == key) {',
+  '            slots_[index].status = DELETED;   <span class="cm">// tombstone, NOT empty</span>',
+  '            --size_;',
+  '            <span class="kw">return</span> <span class="kw">true</span>;',
+  '        }',
+  '        index = (index + <span class="nu">1</span>) % capacity_;',
+  '    }',
+  '    <span class="kw">return</span> <span class="kw">false</span>;',
+  '}'
+];
+
+Stepper(document.getElementById("d2"), function (o) {
+  var wipe = (o.mode === "empty");
+  var R = Recorder(REMOVE_CODE), T = clusterTable();
+  T.fd = null;
+  R.push(0, T, "The cluster from demo 1. Removing <b>Diana</b>, who sits in slot 5.");
+  T.start = hash("Diana", T.cap); T.at = T.start;
+  R.push(1, T, 'hash("Diana") is <b>' + T.start + "</b> &mdash; but Alice is there.");
+
+  for (var n = 0; n < T.cap; n++) {
+    var s = T.slots[T.at];
+    if (s.status === EMPTY) {
+      R.push(4, T, "Slot " + T.at + " is <code>EMPTY</code> &mdash; Diana is not in the table.");
+      R.push(13, T, "Return <code>false</code>.", "false");
+      break;
+    }
+    if (s.status === OCCUPIED && s.key === "Diana") {
+      R.push(5, T, "Found Diana in slot " + T.at + ".");
+      if (wipe) {
+        s.status = EMPTY; s.key = ""; s.value = 0; T.size--;
+        R.push(7, T, "Marked <code>EMPTY</code>. It looks tidy &mdash; the slot is genuinely free "
+                   + "again. Now go and run demo 3: Eve hashes to 5 and this slot now tells every "
+                   + "search <i>stop, nothing is past here</i>.", null, "bad");
+      } else {
+        s.status = DELETED; T.size--;
+        R.push(7, T, "Marked <code>DELETED</code>. The key and value stay in the slot &mdash; what "
+                   + "changed is the status, and that is what keeps the probe run walkable.", null, "good");
+      }
+      R.push(8, T, "<code>size_</code> drops to " + T.size + ". Note the slot is still "
+                 + (wipe ? "taking up no part of any probe run." : "part of the run, even though nobody lives there."));
+      R.push(9, T, "Return <code>true</code>.", "true");
+      break;
+    }
+    R.push(5, T, "Slot " + T.at + " holds <b>" + s.key + "</b>. Step forward.");
+    T.at = (T.at + 1) % T.cap;
+    R.push(11, T, "Probe moves to slot " + T.at + ".");
+  }
+  T.at = null; T.start = null;
+  R.push(14, T, wipe
+    ? "Slot 5 reads <code>EMPTY</code>, and Eve in slot 6 has just become unreachable."
+    : "Slot 5 reads <code>DELETED</code>. Nobody lives there, but the trail through it survives.",
+    null, wipe ? "bad" : "good");
+  return R.frames;
+});
+
+/* ------------------------------------------------------------------ *
+ * Demo 3 -- search across a tombstone
+ * ------------------------------------------------------------------ */
+var SEARCH_CODE = [
+  '<span class="ty">int</span>* ProbingHashTable::<span class="fn">search</span>(<span class="kw">const</span> string&amp; key) <span class="kw">const</span> {',
+  '    <span class="ty">size_t</span> index = <span class="fn">hash</span>(key);',
+  '',
+  '    <span class="kw">for</span> (<span class="ty">int</span> n = <span class="nu">0</span>; n &lt; capacity_; ++n) {',
+  '        <span class="kw">if</span> (slots_[index].status == EMPTY)',
+  '            <span class="kw">return</span> <span class="kw">nullptr</span>;        <span class="cm">// nothing was ever here</span>',
+  '',
+  '        <span class="kw">if</span> (slots_[index].status == OCCUPIED &amp;&amp;',
+  '            slots_[index].key == key)',
+  '            <span class="kw">return</span> &amp;slots_[index].value;',
+  '',
+  '        <span class="cm">// DELETED falls through on purpose -- keep probing</span>',
+  '        index = (index + <span class="nu">1</span>) % capacity_;',
+  '    }',
+  '    <span class="kw">return</span> <span class="kw">nullptr</span>;',
+  '}'
+];
+
+Stepper(document.getElementById("d3"), function (o) {
+  var stopAtDeleted = (o.onDeleted === "stop");
+  var target = o.target || "Eve";
+  var R = Recorder(SEARCH_CODE), T = withTombstone();
+  T.fd = null;
+  R.push(0, T, "Alice in 4, a tombstone in 5 where Diana was, Eve in 6. Looking for <b>" + target + "</b>.");
+  T.start = hash(target, T.cap); T.at = T.start;
+  R.push(1, T, 'hash("' + target + '") is <b>' + T.start + "</b>.");
+
+  var done = false;
+  for (var n = 0; n < T.cap && !done; n++) {
+    var s = T.slots[T.at];
+    if (s.status === EMPTY) {
+      R.push(4, T, "Slot " + T.at + " is <code>EMPTY</code>. Nothing was ever placed here, so nothing "
+                 + "could have probed past it &mdash; the search can stop.");
+      R.push(5, T, "Return <code>nullptr</code>. <b>" + target + "</b> is not in the table.",
+             "nullptr", target === "Frank" ? "good" : "bad");
+      done = true;
+      break;
+    }
+    if (s.status === DELETED) {
+      if (stopAtDeleted) {
+        R.push(4, T, "Slot " + T.at + " is <code>DELETED</code> &mdash; and this version treats that "
+                   + "like <code>EMPTY</code> and gives up.", null, "bad");
+        R.push(5, T, "Return <code>nullptr</code>. But look at the table: <b>" + target + "</b> is "
+                   + "sitting right there in slot 6. The entry was never removed &mdash; the search "
+                   + "just stopped one slot too early.", "nullptr", "bad");
+        done = true;
+        break;
+      }
+      R.push(11, T, "Slot " + T.at + " is a tombstone. Something used to be here, so the probe run "
+                  + "continues through it &mdash; <b>" + target + "</b> may be further along.");
+      T.at = (T.at + 1) % T.cap;
+      R.push(12, T, "Probe moves to slot " + T.at + ".");
+      continue;
+    }
+    if (s.status === OCCUPIED && s.key === target) {
+      R.push(7, T, "Slot " + T.at + " holds <b>" + target + "</b>.");
+      R.push(9, T, "Return the address of its value &mdash; " + s.value + ".", "&slots_[" + T.at + "].value = " + s.value, "good");
+      done = true;
+      break;
+    }
+    R.push(7, T, "Slot " + T.at + " holds <b>" + s.key + "</b>, not " + target + ". Step forward.");
+    T.at = (T.at + 1) % T.cap;
+    R.push(12, T, "Probe moves to slot " + T.at + ".");
+  }
+  T.at = null; T.start = null;
+  if (stopAtDeleted && target === "Eve") {
+    R.push(15, T, "This is the bug that looks random. Only the keys that happen to probe <i>past</i> a "
+                + "removed slot disappear &mdash; everything else keeps working, so the table seems "
+                + "fine until it suddenly is not.", null, "bad");
+  } else if (target === "Eve") {
+    R.push(15, T, "Eve was found two slots from where she hashes, across a tombstone. That is the "
+                + "whole reason <code>DELETED</code> exists.", null, "good");
+  }
+  return R.frames;
+});
+
+/* ------------------------------------------------------------------ *
+ * Demo 4 -- the tombstone trap on insert
+ * ------------------------------------------------------------------ */
+Stepper(document.getElementById("d4"), function (o) {
+  var claim = (o.mode === "claim");
+  var R = Recorder(INSERT_CODE), T = withTombstone();
+  R.push(0, T, "Same table: tombstone in slot 5, Eve alive in slot 6. Re-inserting "
+             + "<b>Eve</b> with a new grade of 91 &mdash; this should be an <i>update</i>.");
+  recordInsert(R, T, "Eve", 91, { claimTombstone: claim });
+
+  var count = T.slots.filter(function (s) {
+    return s.status === OCCUPIED && s.key === "Eve";
+  }).length;
+  if (count > 1) {
+    R.push(19, T, "<b>Two Eves.</b> Slot 5 and slot 6 both claim her, with different grades. "
+                + "A later <code>search</code> stops at the first one it meets, so the table will "
+                + "answer with whichever the probe reaches first &mdash; and <code>size_</code> is "
+                + "now wrong as well.", null, "bad");
+  } else {
+    R.push(19, T, "One Eve, updated in place. Finishing the probe before using "
+                + "<code>first_deleted</code> is what prevented the duplicate.", null, "good");
+  }
+  return R.frames;
+});
+
+/* ------------------------------------------------------------------ *
+ * Demo 5 -- resize sweeps the tombstones away
+ * ------------------------------------------------------------------ */
+var RESIZE_CODE = [
+  '<span class="kw">void</span> ProbingHashTable::<span class="fn">resize</span>() {',
+  '    HashSlot* old_slots = slots_;          <span class="cm">// 1. save</span>',
+  '    <span class="ty">int</span> old_cap = capacity_;',
+  '',
+  '    capacity_ = <span class="fn">next_prime</span>(capacity_ * <span class="nu">2</span>);',
+  '    slots_ = <span class="kw">new</span> HashSlot[capacity_];       <span class="cm">// 2. allocate</span>',
+  '    size_  = <span class="nu">0</span>;',
+  '',
+  '    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i &lt; old_cap; ++i) {   <span class="cm">// 3. rehash</span>',
+  '        <span class="kw">if</span> (old_slots[i].status == OCCUPIED)',
+  '            <span class="fn">insert</span>(old_slots[i].key, old_slots[i].value);',
+  '    }',
+  '',
+  '    <span class="kw">delete</span>[] old_slots;                  <span class="cm">// 4. free</span>',
+  '}'
+];
+
+Stepper(document.getElementById("d5"), function () {
+  var R = Recorder(RESIZE_CODE), old = withTombstone();
+  old.fd = null;
+  R.push(0, old, "Before: 7 slots. Alice and Eve are live, and slot 5 is the tombstone Diana left behind — two entries, not three.");
+  R.push(1, old, "The old array is saved in a local pointer so its entries can still be read.");
+
+  var T = makeTable(17);
+  T.fd = null;
+  R.push(5, T, "A new, larger array &mdash; 17 slots, every one <code>EMPTY</code>. "
+             + "<code>size_</code> resets to 0 because the entries are about to be re-inserted.");
+
+  for (var i = 0; i < old.cap; i++) {
+    var s = old.slots[i];
+    if (s.status === OCCUPIED) {
+      var ni = hash(s.key, T.cap);
+      T.at = ni;
+      quietInsert(T, s.key, s.value);
+      R.push(10, T, "<b>" + s.key + "</b> was in old slot " + i + ". Re-hashed against the new "
+                  + "capacity she belongs in slot <b>" + ni + "</b> &mdash; the index changed because "
+                  + "<code>% capacity_</code> changed.");
+    } else if (s.status === DELETED) {
+      R.push(9, T, "Old slot " + i + " is a tombstone, not <code>OCCUPIED</code> &mdash; so it is "
+                 + "<b>skipped</b>. This is the only thing that ever clears a tombstone.", null, "good");
+    }
+  }
+  T.at = null;
+  R.push(13, T, "The old array is freed. Two entries, no tombstones, and the probe runs are short "
+              + "again &mdash; which is the point of resizing before the table fills up. Diana's "
+              + "tombstone is simply gone: nothing carried it across.", null, "good");
+  return R.frames;
+});
+</script>
+</body>
+</html>
