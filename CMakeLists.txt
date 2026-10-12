@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(ct11-probing-hash-table LANGUAGES CXX)
+project(ct12-probing-hash-tables LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 
