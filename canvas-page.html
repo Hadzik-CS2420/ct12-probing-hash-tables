@@ -6,7 +6,7 @@
      checker, and Weber's Canvas rejects SVG on course import. The diagrams are
      named in a table and read in the repository.
      Part points match the SECTIONS table in tests/scorecard.py, section for
-     section. Starting score (4/30) measured by building the starter in the Dev
+     section. Starting score (3/30) measured by building the starter in the Dev
      Container image. -->
 
 <h3>&#x1F3AF; Overview</h3>
@@ -27,7 +27,7 @@
 </ul>
 
 <div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #d9edf7; border: 1px solid #bce8f1; color: #31708f;">
-    <strong>Your scorecard starts at 4, not 0.</strong> <code>hash()</code> is already written for you &mdash; it is the same multiply-and-add function you wrote in CT 11, and the hash does not care how collisions get resolved. Its 4 points pass on a fresh clone. The <strong>26 that remain</strong> are the probing itself.
+    <strong>Your scorecard starts at 3, not 0.</strong> <code>hash()</code> is already written for you &mdash; it is the same multiply-and-add function you wrote in CT 11, and the hash does not care how collisions get resolved. Its 3 points pass on a fresh clone. The <strong>27 that remain</strong> are the probing itself.
 </div>
 
 <div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #dff0d8; border: 1px solid #d6e9c6; color: #3c763d;">
@@ -65,7 +65,7 @@ code ct12-probing-hash-tables-YOUR-USERNAME</pre>
 cmake --build build</pre>
 <p><code>cmake -B build</code> is a one-time step &mdash; it creates the <code>build/</code> folder and downloads Google Test. After that, <code>cmake --build build</code> is all you need after each change.</p>
 
-<p><strong>Checkpoint:</strong> the build finishes and <code>python3 tests/scorecard.py</code> reads <strong>4/30</strong>. That is the correct starting point.</p>
+<p><strong>Checkpoint:</strong> the build finishes and <code>python3 tests/scorecard.py</code> reads <strong>3/30</strong>. That is the correct starting point.</p>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
@@ -99,6 +99,7 @@ cmake --build build</pre>
         <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingRemove.*</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 5 &mdash; remove()</td></tr>
         <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>Tombstone.*</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 5 &mdash; probing past a tombstone</td></tr>
         <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingResize.*</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 6 &mdash; resize()</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingPrint.*</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 7 &mdash; print()</td></tr>
     </tbody>
 </table>
 </details>
@@ -115,7 +116,7 @@ cmake --build build</pre>
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
 <summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Part 2: hash() &mdash; Already Written, Read It Anyway</h3></summary>
 
-<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>nothing to write here</strong>, 4 points already passing</p>
+<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>nothing to write here</strong>, 3 points already passing</p>
 <p>This is the identical multiply-and-add function from CT 11, handed to you:</p>
 <pre style="background-color: #1e1e1e; color: #d4d4d4; padding: 12px 16px; border-radius: 4px; overflow-x: auto; font-family: Consolas, 'Courier New', monospace; font-size: 0.875em; line-height: 1.6; margin: 8px 0;">size_t hash_value = 0;
 for (char c : key) {
@@ -123,13 +124,13 @@ for (char c : key) {
 }
 return hash_value % capacity_;</pre>
 <p>Read it before moving on, because it explains the division of labour in the rest of the file. The hash function&#x2019;s only job is to pick a <strong>starting</strong> index. What happens when that slot is taken is the collision strategy&#x2019;s job &mdash; and in this table, that means stepping forward.</p>
-<p><strong>Checkpoint:</strong> both <code>HashFunction</code> tests already pass &mdash; 4 points, on a fresh clone.</p>
+<p><strong>Checkpoint:</strong> all three <code>HashFunction</code> tests already pass &mdash; 3 points, on a fresh clone.</p>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
 <summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Part 3: insert() &mdash; Probe Forward, and Mind the Tombstone</h3></summary>
 
-<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 4</strong>, worth <strong>7 points</strong></p>
+<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 4</strong>, worth <strong>6 points</strong></p>
 <p>Four things happen in order, and the order matters:</p>
 <ol>
 <li><strong>Resize first</strong>, if adding this entry would push the load factor past the threshold. Probing a nearly full table is where the cost explodes, so the check happens before the insert, not after.</li>
@@ -140,7 +141,7 @@ return hash_value % capacity_;</pre>
 <div style="padding: 14px 18px; border-radius: 4px; margin-bottom: 16px; background-color: #fcf8e3; border: 1px solid #faebcc; color: #8a6d3b;">
     <strong>The trap:</strong> do not drop the entry into the first tombstone the moment you see one. The key might already be further along the probe run, and writing it early leaves <em>two</em> copies in the table. Keep probing to confirm the key is absent, <em>then</em> go back and use <code>first_deleted</code> if you saw one. See <code>insert_tombstone_trap.png</code>.
 </div>
-<p><strong>Checkpoint:</strong> all three <code>ProbingInsert</code> tests pass &mdash; 7 points, including <code>HandlesCollisionsViaProbing</code>.</p>
+<p><strong>Checkpoint:</strong> all four <code>ProbingInsert</code> tests pass &mdash; 6 points, including <code>HandlesCollisionsViaProbing</code>.</p>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
@@ -154,16 +155,16 @@ return hash_value % capacity_;</pre>
 <li><code>EMPTY</code> &mdash; stop, and return <code>nullptr</code>. Nothing was ever placed here, so nothing could have probed past it.</li>
 </ul>
 <p>Treating <code>DELETED</code> like <code>EMPTY</code> is the single most common bug in this file, and it fails in a way that looks random: the keys that disappear are only the ones that happened to probe past a removed slot.</p>
-<p><strong>Checkpoint:</strong> both <code>ProbingSearch</code> tests pass &mdash; 5 points.</p>
+<p><strong>Checkpoint:</strong> all four <code>ProbingSearch</code> tests pass &mdash; 5 points.</p>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
 <summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Part 5: remove() &mdash; Why a Tombstone Exists</h3></summary>
 
-<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 6</strong>, worth <strong>6 + 3 points</strong></p>
+<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 6</strong>, worth <strong>5 + 5 points</strong></p>
 <p>Find the key the same way <code>search</code> does, then mark its slot <code>DELETED</code> and decrement <code>size_</code>. The slot keeps its contents; only the status changes.</p>
 <p>Marking it <code>EMPTY</code> instead would be the obvious move and it is exactly wrong. An <code>EMPTY</code> slot tells every future search &quot;stop, nothing is past here&quot; &mdash; so any key that originally probed <em>through</em> this slot becomes unreachable, even though it is still sitting in the array. The tombstone is what keeps the trail intact.</p>
-<p><strong>Checkpoint:</strong> the three <code>ProbingRemove</code> tests and <code>Tombstone.SearchProbesPastTombstone</code> pass &mdash; 9 points. That last one is the test that proves the trail survived.</p>
+<p><strong>Checkpoint:</strong> all five <code>ProbingRemove</code> tests and all four <code>Tombstone</code> tests pass &mdash; 10 points. <code>Tombstone.SearchProbesPastTombstone</code> is the one that proves the trail survived; <code>InsertReusesTombstoneSlot</code> is the one that catches the trap in Part 3.</p>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
@@ -221,7 +222,7 @@ return hash_value % capacity_;</pre>
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
 <summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Part 6: resize() &mdash; Four Steps, and the Tombstones Go Away</h3></summary>
 
-<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 8</strong>, worth <strong>5 points</strong></p>
+<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 8</strong>, worth <strong>3 points</strong></p>
 <p>In order:</p>
 <ol>
 <li>Save the old array in a local pointer.</li>
@@ -230,14 +231,14 @@ return hash_value % capacity_;</pre>
 <li><code>delete[]</code> the old array.</li>
 </ol>
 <p>Step 3 is where tombstones disappear: they are not <code>OCCUPIED</code>, so they are never carried across. A resize is the only thing that cleans them up, which is another reason probing tables resize earlier than chaining ones &mdash; tombstones lengthen probe runs just like real entries do, without holding any data.</p>
-<p><strong>Checkpoint:</strong> both <code>ProbingResize</code> tests pass &mdash; 5 points. <code>TombstonesCleared</code> checks step 3 specifically.</p>
+<p><strong>Checkpoint:</strong> all three <code>ProbingResize</code> tests pass &mdash; 3 points. <code>TombstonesCleared</code> checks step 3 specifically, and <code>AllEntriesSurvive</code> catches a rehash that dropped something.</p>
 </details>
 
 <details style="border: 1px solid #d7dae0; border-left: 4px solid #1c7e45; border-radius: 8px; padding: .5rem 1rem; margin: .6rem 0; background: #fcfcfd;">
 <summary style="cursor: pointer; list-style: none;"><h3 style="display: inline-block; margin: .25rem 0; font-size: 1.2rem; vertical-align: middle;">Part 7: print() and Seeing It Work</h3></summary>
 
-<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 9</strong>, not scored</p>
-<p>Loop every slot from 0 to <code>capacity_ - 1</code> and print its index, status and contents. No test scores it, and it is still the most useful thing in the file while you are debugging &mdash; a probe run, a cluster and a tombstone all become obvious the moment you can see the array laid out.</p>
+<p>File: <code>src/ProbingHashTable.cpp</code> &mdash; <strong>section 9</strong>, worth <strong>3 points</strong></p>
+<p>Loop every slot from 0 to <code>capacity_ - 1</code> and print its index, status and contents. It is the most useful thing in the file while you are debugging &mdash; a probe run, a cluster and a tombstone all become obvious the moment you can see the array laid out.</p>
 <p><strong>Checkpoint:</strong> <code>python3 tests/scorecard.py</code> reads <strong>30</strong>.</p>
 </details>
 
@@ -297,13 +298,14 @@ git push</pre>
         </tr>
     </thead>
     <tbody>
-        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>hash()</code> &mdash; given to you</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>HashFunction</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">4</td></tr>
-        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 3 &mdash; <code>insert()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingInsert</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">7</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>hash()</code> &mdash; given to you</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>HashFunction</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">3</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 3 &mdash; <code>insert()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingInsert</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">6</td></tr>
         <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 4 &mdash; <code>search()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingSearch</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td></tr>
-        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 5 &mdash; <code>remove()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingRemove</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">6</td></tr>
-        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 5 &mdash; tombstones</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>Tombstone</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">3</td></tr>
-        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 6 &mdash; <code>resize()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingResize</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td></tr>
-        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><strong>Total</strong></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><strong>30</strong></td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 5 &mdash; <code>remove()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingRemove</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 5 &mdash; tombstones</td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>Tombstone</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">5</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 6 &mdash; <code>resize()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingResize</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">3</td></tr>
+        <tr><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">Part 7 &mdash; <code>print()</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><code>ProbingPrint</code></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;">3</td></tr>
+        <tr style="background-color: #fafafa;"><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><strong>Total</strong></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"></td><td style="border: 1px solid #c7cdd1; padding: 10px 14px;"><strong>30</strong></td></tr>
     </tbody>
 </table>
 </details>

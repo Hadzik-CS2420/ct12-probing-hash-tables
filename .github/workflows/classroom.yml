@@ -37,13 +37,13 @@ jobs:
         timeout: 10
         max-score: 0
 
-    # ==================== Hash Function Tests (4 points) ====================
+    # ==================== Hash Function Tests (given to students) (3 points) ====================
 
-    - name: Hash Consistent Results (2 points)
+    - name: Hash Consistent Results (1 point)
       id: hash-consistent
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Hash Consistent Results (2 points)
+        test-name: Hash Consistent Results (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -52,13 +52,14 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
 
-    - name: Hash Within Range (2 points)
+
+    - name: Hash Within Range (1 point)
       id: hash-range
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Hash Within Range (2 points)
+        test-name: Hash Within Range (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -67,7 +68,24 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
+
+
+    - name: Hash Spreads Keys (1 point)
+      id: hash-differs
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Hash Spreads Keys (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=HashFunction.DifferentKeysCanDiffer
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
 
     # ==================== Insert Tests (6 points) ====================
 
@@ -86,11 +104,12 @@ jobs:
         timeout: 10
         max-score: 2
 
-    - name: Insert Update Existing Key (2 points)
+
+    - name: Insert Updates Existing Key (1 point)
       id: insert-update
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Insert Update Existing Key (2 points)
+        test-name: Insert Updates Existing Key (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -99,13 +118,14 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
 
-    - name: Insert Handles Collisions Via Probing (2 points)
+
+    - name: Insert Probes On Collision (2 points)
       id: insert-collisions
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Insert Handles Collisions Via Probing (2 points)
+        test-name: Insert Probes On Collision (2 points)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -114,15 +134,32 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
-    # ==================== Search Tests (4 points) ====================
 
-    - name: Search Finds Existing Key (2 points)
+    - name: Insert Many Entries (1 point)
+      id: insert-many
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Insert Many Entries (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingInsert.ManyInserts
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    # ==================== Search Tests (5 points) ====================
+
+    - name: Search Finds Existing Key (1 point)
       id: search-finds
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Search Finds Existing Key (2 points)
+        test-name: Search Finds Existing Key (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -131,7 +168,8 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
+
 
     - name: Search Finds After Collision (2 points)
       id: search-collision
@@ -146,15 +184,48 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
-    # ==================== Remove / Tombstone Tests (8 points) ====================
 
-    - name: Remove Sets Tombstone (2 points)
+    - name: Search Returns Null For Missing (1 point)
+      id: search-missing
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Search Returns Null For Missing (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingSearch.ReturnsNullForMissing
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    - name: Search On Empty Table (1 point)
+      id: search-empty
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Search On Empty Table (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingSearch.EmptyTable
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    # ==================== Remove Tests (5 points) ====================
+
+    - name: Remove Sets Tombstone (1 point)
       id: remove-tombstone
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Remove Sets Tombstone (2 points)
+        test-name: Remove Sets Tombstone (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -163,13 +234,14 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
 
-    - name: Remove Does Not Break Search (2 points)
+
+    - name: Remove Does Not Break Search (1 point)
       id: remove-doesnt-break
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Remove Does Not Break Search (2 points)
+        test-name: Remove Does Not Break Search (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -178,13 +250,14 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
 
-    - name: Remove Returns False For Missing (2 points)
+
+    - name: Remove Returns False For Missing (1 point)
       id: remove-missing
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Remove Returns False For Missing (2 points)
+        test-name: Remove Returns False For Missing (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -193,13 +266,48 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
 
-    - name: Tombstone Search Probes Past (2 points)
+
+    - name: Remove From Empty Table (1 point)
+      id: remove-empty
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Remove From Empty Table (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingRemove.RemoveFromEmptyTable
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    - name: Remove Then Insert Same Key (1 point)
+      id: remove-reinsert
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Remove Then Insert Same Key (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingRemove.RemoveThenInsertSameKey
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    # ==================== Tombstone Tests (5 points) ====================
+
+    - name: Search Probes Past Tombstone (2 points)
       id: tombstone-search
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Tombstone Search Probes Past (2 points)
+        test-name: Search Probes Past Tombstone (2 points)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -208,15 +316,64 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 2
 
-    # ==================== Resize Tests (6 points) ====================
 
-    - name: Resize Triggers On High Load Factor (3 points)
+    - name: Insert Reuses Tombstone Slot (1 point)
+      id: tombstone-reuse
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Insert Reuses Tombstone Slot (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=Tombstone.InsertReusesTombstoneSlot
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    - name: Multiple Tombstones In Chain (1 point)
+      id: tombstone-multiple
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Multiple Tombstones In Chain (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=Tombstone.MultipleTombstonesInProbeChain
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    - name: Insert After Remove Same Key (1 point)
+      id: tombstone-reinsert
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Insert After Remove Same Key (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=Tombstone.InsertAfterRemoveSameKey
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    # ==================== Resize Tests (3 points) ====================
+
+    - name: Resize Triggers On Load Factor (1 point)
       id: resize-triggers
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Resize Triggers On High Load Factor (3 points)
+        test-name: Resize Triggers On Load Factor (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -225,13 +382,14 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 3
+        max-score: 1
 
-    - name: Resize Tombstones Cleared (3 points)
+
+    - name: Resize Clears Tombstones (1 point)
       id: resize-tombstones
       uses: classroom-resources/autograding-command-grader@v1
       with:
-        test-name: Resize Tombstones Cleared (3 points)
+        test-name: Resize Clears Tombstones (1 point)
         setup-command: ''
         command: |
           if [ -f build/run_tests ]; then
@@ -240,24 +398,103 @@ jobs:
             exit 1
           fi
         timeout: 10
-        max-score: 2
+        max-score: 1
+
+
+    - name: Resize Keeps Every Entry (1 point)
+      id: resize-survive
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Resize Keeps Every Entry (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingResize.AllEntriesSurvive
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    # ==================== Print Tests (3 points) ====================
+
+    - name: Print Empty Table (1 point)
+      id: print-empty
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Print Empty Table (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingPrint.DoesNotCrashEmpty
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    - name: Print With Entries (1 point)
+      id: print-entries
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Print With Entries (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingPrint.DoesNotCrashWithEntries
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
+
+
+    - name: Print Shows Tombstones (1 point)
+      id: print-tombstones
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Print Shows Tombstones (1 point)
+        setup-command: ''
+        command: |
+          if [ -f build/run_tests ]; then
+            cd build && ./run_tests --gtest_filter=ProbingPrint.ShowsTombstones
+          else
+            exit 1
+          fi
+        timeout: 10
+        max-score: 1
 
     - name: Autograding Reporter
       uses: classroom-resources/autograding-grading-reporter@v1
       env:
-        BUILD_RESULTS:              "${{steps.build.outputs.result}}"
-        HASH-CONSISTENT_RESULTS:    "${{steps.hash-consistent.outputs.result}}"
-        HASH-RANGE_RESULTS:         "${{steps.hash-range.outputs.result}}"
-        INSERT-BASIC_RESULTS:       "${{steps.insert-basic.outputs.result}}"
-        INSERT-UPDATE_RESULTS:      "${{steps.insert-update.outputs.result}}"
-        INSERT-COLLISIONS_RESULTS:  "${{steps.insert-collisions.outputs.result}}"
-        SEARCH-FINDS_RESULTS:       "${{steps.search-finds.outputs.result}}"
-        SEARCH-COLLISION_RESULTS:   "${{steps.search-collision.outputs.result}}"
-        REMOVE-TOMBSTONE_RESULTS:   "${{steps.remove-tombstone.outputs.result}}"
-        REMOVE-DOESNT-BREAK_RESULTS: "${{steps.remove-doesnt-break.outputs.result}}"
-        REMOVE-MISSING_RESULTS:     "${{steps.remove-missing.outputs.result}}"
-        TOMBSTONE-SEARCH_RESULTS:   "${{steps.tombstone-search.outputs.result}}"
-        RESIZE-TRIGGERS_RESULTS:    "${{steps.resize-triggers.outputs.result}}"
-        RESIZE-TOMBSTONES_RESULTS:  "${{steps.resize-tombstones.outputs.result}}"
+        BUILD_RESULTS:               "${{steps.build.outputs.result}}"
+        HASH_CONSISTENT_RESULTS:     "${{steps.hash-consistent.outputs.result}}"
+        HASH_RANGE_RESULTS:          "${{steps.hash-range.outputs.result}}"
+        HASH_DIFFERS_RESULTS:        "${{steps.hash-differs.outputs.result}}"
+        INSERT_BASIC_RESULTS:        "${{steps.insert-basic.outputs.result}}"
+        INSERT_UPDATE_RESULTS:       "${{steps.insert-update.outputs.result}}"
+        INSERT_COLLISIONS_RESULTS:   "${{steps.insert-collisions.outputs.result}}"
+        INSERT_MANY_RESULTS:         "${{steps.insert-many.outputs.result}}"
+        SEARCH_FINDS_RESULTS:        "${{steps.search-finds.outputs.result}}"
+        SEARCH_COLLISION_RESULTS:    "${{steps.search-collision.outputs.result}}"
+        SEARCH_MISSING_RESULTS:      "${{steps.search-missing.outputs.result}}"
+        SEARCH_EMPTY_RESULTS:        "${{steps.search-empty.outputs.result}}"
+        REMOVE_TOMBSTONE_RESULTS:    "${{steps.remove-tombstone.outputs.result}}"
+        REMOVE_DOESNT_BREAK_RESULTS: "${{steps.remove-doesnt-break.outputs.result}}"
+        REMOVE_MISSING_RESULTS:      "${{steps.remove-missing.outputs.result}}"
+        REMOVE_EMPTY_RESULTS:        "${{steps.remove-empty.outputs.result}}"
+        REMOVE_REINSERT_RESULTS:     "${{steps.remove-reinsert.outputs.result}}"
+        TOMBSTONE_SEARCH_RESULTS:    "${{steps.tombstone-search.outputs.result}}"
+        TOMBSTONE_REUSE_RESULTS:     "${{steps.tombstone-reuse.outputs.result}}"
+        TOMBSTONE_MULTIPLE_RESULTS:  "${{steps.tombstone-multiple.outputs.result}}"
+        TOMBSTONE_REINSERT_RESULTS:  "${{steps.tombstone-reinsert.outputs.result}}"
+        RESIZE_TRIGGERS_RESULTS:     "${{steps.resize-triggers.outputs.result}}"
+        RESIZE_TOMBSTONES_RESULTS:   "${{steps.resize-tombstones.outputs.result}}"
+        RESIZE_SURVIVE_RESULTS:      "${{steps.resize-survive.outputs.result}}"
+        PRINT_EMPTY_RESULTS:         "${{steps.print-empty.outputs.result}}"
+        PRINT_ENTRIES_RESULTS:       "${{steps.print-entries.outputs.result}}"
+        PRINT_TOMBSTONES_RESULTS:    "${{steps.print-tombstones.outputs.result}}"
       with:
-        runners: build,hash-consistent,hash-range,insert-basic,insert-update,insert-collisions,search-finds,search-collision,remove-tombstone,remove-doesnt-break,remove-missing,tombstone-search,resize-triggers,resize-tombstones
+        runners: build,hash-consistent,hash-range,hash-differs,insert-basic,insert-update,insert-collisions,insert-many,search-finds,search-collision,search-missing,search-empty,remove-tombstone,remove-doesnt-break,remove-missing,remove-empty,remove-reinsert,tombstone-search,tombstone-reuse,tombstone-multiple,tombstone-reinsert,resize-triggers,resize-tombstones,resize-survive,print-empty,print-entries,print-tombstones
