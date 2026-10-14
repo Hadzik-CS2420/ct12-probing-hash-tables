@@ -1,8 +1,8 @@
-# CT11 — Probing Hash Tables
+# CT 12 — Probing Hash Tables
 
 ## Overview
 
-An in-class code-together activity introducing **linear probing (closed hashing / open addressing)** — the second collision resolution strategy after CT10's separate chaining. Students build a `ProbingHashTable` that stores entries directly in a flat array, resolves collisions by scanning forward one slot at a time, and uses **tombstone deletion** to preserve probe sequences. The activity covers load factor monitoring with a lower threshold (0.75 vs chaining's 1.0) and resizing with rehashing that clears tombstones. The scenario continues the professor's grade book: student names are keys, integer grades are values.
+An in-class code-together activity introducing **linear probing (closed hashing / open addressing)** — the second collision resolution strategy after CT 11's separate chaining. Students build a `ProbingHashTable` that stores entries directly in a flat array, resolves collisions by scanning forward one slot at a time, and uses **tombstone deletion** to preserve probe sequences. The activity covers load factor monitoring with a lower threshold (0.75 vs chaining's 1.0) and resizing with rehashing that clears tombstones. The scenario continues the professor's grade book: student names are keys, integer grades are values.
 
 ## Learning Objectives
 
@@ -38,7 +38,7 @@ Walk through the HashSlot struct and SlotStatus enum. Explain why three states a
 
 ### 2. `ProbingHashTable.h` — Class declaration
 
-Compare the header to CT10's ChainingHashTable.h. Highlight the differences.
+Compare the header to CT 11's ChainingHashTable.h. Highlight the differences.
 
 1. **HashSlot* vs ChainNode\*\*** — flat array of structs vs array of linked list pointers
 2. **MAX_LOAD_FACTOR = 0.75** — lower threshold than chaining's 1.0 due to clustering
@@ -50,7 +50,7 @@ Walk through the complete implementation. All code is given — students follow 
 
 1. **Constructor** — allocate `HashSlot` array; default constructor sets every slot to EMPTY
 2. **Destructor** — simple `delete[] table_` (no chains to walk, contrast with chaining)
-3. **hash()** — same multiply-and-add algorithm as CT10; hash function doesn't care about collision strategy
+3. **hash()** — same multiply-and-add algorithm as CT 11; hash function doesn't care about collision strategy
 4. **insert()** — hash the key; resize BEFORE inserting if load factor would exceed 0.75; probe forward with `(index + 1) % capacity_` until finding EMPTY, DELETED, or matching key
 5. **search()** — hash the key; probe forward: OCCUPIED + match = found, DELETED = keep probing, EMPTY = not found
 6. **remove()** — find the key; set status to DELETED (tombstone); explain why EMPTY would break probe chains
@@ -76,7 +76,7 @@ Maps CCD 2.6 (Hash Tables) topics to specific sections in this activity.
 | CCD Topic | Where It's Covered |
 |---|---|
 | **Hash tables** — purpose, structure, key-value mapping | `ProbingHashTable.h` (class declaration), `HashSlot.h` (slot struct), `main.cpp` sections 1-3 (grade book usage) |
-| **Hash algorithms** — hash functions, modulo mapping, distribution | `ProbingHashTable.cpp` section 3 (hash — same algorithm as CT10), DISCUSSION: hash function is independent of collision strategy |
+| **Hash algorithms** — hash functions, modulo mapping, distribution | `ProbingHashTable.cpp` section 3 (hash — same algorithm as CT 11), DISCUSSION: hash function is independent of collision strategy |
 | **Array based (closed hashing)** — linear probing, quadratic probing | `ProbingHashTable.cpp` sections 4-6 (insert/search/remove with linear probing), `main.cpp` sections 1-8 (full probing demo); quadratic probing mentioned in DISCUSSION but not implemented |
 | **Optimizing hash tables** — load factor, resizing, choosing hash functions | `ProbingHashTable.cpp` sections 7-8 (load_factor + resize); DISCUSSION covers 0.75 threshold, primary clustering, tombstone cleanup during resize; `main.cpp` section 7 (resize demo) |
 

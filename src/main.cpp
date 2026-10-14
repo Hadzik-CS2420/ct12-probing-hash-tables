@@ -1,5 +1,5 @@
 // =============================================================================
-// CT11: Probing Hash Table — Grade Book System
+// CT 12: Probing Hash Table — Grade Book System
 // =============================================================================
 //
 // - Scenario: a professor manages student grades using a probing hash table
@@ -13,7 +13,7 @@
 #include "ProbingHashTable.h"
 
 int main() {
-    std::cout << "=== CT11: Probing Hash Tables ===\n";
+    std::cout << "=== CT 12: Probing Hash Tables ===\n";
     std::cout << "=== Scenario: Professor's Grade Book ===\n\n";
 
     ProbingHashTable grade_book;
@@ -24,7 +24,7 @@ int main() {
     // 1. Insert five student grades into the probing table
     // -----------------------------------------------------------------------
     //
-    // ! DISCUSSION: Same five students as CT10 — but now collisions are
+    // ! DISCUSSION: Same five students as CT 11 — but now collisions are
     //   resolved by probing forward instead of chaining.
     //   - when two keys hash to the same index, the second one moves forward
     //   - this creates "clusters" of consecutive occupied slots
@@ -41,7 +41,7 @@ int main() {
     // 2. Print the table to see the slot layout (notice clustering)
     // -----------------------------------------------------------------------
     //
-    // ! DISCUSSION: Compare this output to CT10's chaining table.
+    // ! DISCUSSION: Compare this output to CT 11's chaining table.
     //   - chaining: collisions form linked lists at the SAME bucket index
     //   - probing: collisions push entries to ADJACENT slots (clustering)
     //   - notice consecutive occupied slots — this is primary clustering
@@ -161,6 +161,6 @@ int main() {
     grade_book.print();
     std::cout << "  Load factor: " << grade_book.load_factor() << "\n";
 
-    std::cout << "\n=== CT11 Complete ===\n";
+    std::cout << "\n=== CT 12 Complete ===\n";
     return 0;
 }

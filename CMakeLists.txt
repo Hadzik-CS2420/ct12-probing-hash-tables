@@ -35,7 +35,7 @@ FetchContent_MakeAvailable(googletest)
 
 # Test executable
 add_executable(run_tests
-    tests/ct11_test.cpp
+    tests/ct12_test.cpp
     ${LIB_SOURCES}
 )
 target_include_directories(run_tests PRIVATE include)

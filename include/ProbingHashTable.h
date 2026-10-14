@@ -27,7 +27,7 @@
 //
 // Key design decisions:
 //   - std::string keys, int values (simple key-value pairs)
-//   - Custom hash function (multiply-and-add with modulo) — same as CT10
+//   - Custom hash function (multiply-and-add with modulo) — same as CT 11
 //   - Prime table capacity to reduce clustering
 //   - MAX_LOAD_FACTOR = 0.75 — resize before the table gets too full
 //

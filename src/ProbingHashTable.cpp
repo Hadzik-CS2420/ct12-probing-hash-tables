@@ -13,7 +13,7 @@
 #include <iostream>
 
 // =============================================================================
-// Helper — next_prime                                          [same as CT10]
+// Helper — next_prime                                          [same as CT 11]
 // =============================================================================
 //
 // - Returns the smallest prime >= n
@@ -73,7 +73,7 @@ ProbingHashTable::~ProbingHashTable() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. hash() — custom hash function                             [same as CT10]
+// 3. hash() — custom hash function                             [same as CT 11]
 // ---------------------------------------------------------------------------
 //
 // ? SEE DIAGRAM: Linear Probing — Insert "Diana"  →  images/header_diagrams.md
@@ -206,7 +206,7 @@ bool ProbingHashTable::remove(const std::string& key) {
 }
 
 // ---------------------------------------------------------------------------
-// 7. load_factor()                                             [same as CT10]
+// 7. load_factor()                                             [same as CT 11]
 // ---------------------------------------------------------------------------
 //
 // ? SEE DIAGRAM: Resize — Rehash OCCUPIED, Clear Tombstones  →  images/header_diagrams.md
